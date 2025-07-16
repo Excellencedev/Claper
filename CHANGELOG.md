@@ -12,6 +12,7 @@
 - Refactor view templates to use {} instead of <%= %>
 - Fix event name validation to be required
 - Docker image is now using Ubuntu instead of Alpine for better dependencies support
+- Fix scrollbar not showing in event manager when no presentation file (#164) (@aryel780)
 
 ### v.2.3.2
 
