@@ -218,7 +218,7 @@ defmodule ClaperWeb.EventLive.ManagerSettingsComponent do
               <span>{gettext("Presentation")}</span>
             </div>
 
-            <div class="flex space-x-1 items-center mt-3">
+            <div class="flex space-x-1 items-center">
               <ClaperWeb.Component.Input.check_button
                 key={:join_screen_visible}
                 checked={@state.join_screen_visible}
@@ -269,7 +269,7 @@ defmodule ClaperWeb.EventLive.ManagerSettingsComponent do
               </ClaperWeb.Component.Input.check_button>
             </div>
 
-            <div class="flex space-x-2 items-center mt-3">
+            <div class="flex space-x-2 items-center">
               <ClaperWeb.Component.Input.check_button
                 key={:chat_visible}
                 checked={@state.chat_visible}
@@ -316,7 +316,7 @@ defmodule ClaperWeb.EventLive.ManagerSettingsComponent do
             </div>
 
             <div
-              class={"#{if !@state.chat_visible, do: "opacity-50"} flex space-x-2 items-center mt-3"}
+              class={"#{if !@state.chat_visible, do: "opacity-50"} flex space-x-2 items-center"}
               title={
                 if !@state.chat_visible,
                   do: gettext("Show messages to change this option"),
@@ -391,7 +391,7 @@ defmodule ClaperWeb.EventLive.ManagerSettingsComponent do
               <span>{gettext("Attendees")}</span>
             </div>
 
-            <div class="flex space-x-2 items-center mt-3">
+            <div class="flex space-x-2 items-center">
               <ClaperWeb.Component.Input.check_button
                 key={:chat_enabled}
                 checked={@state.chat_enabled}
@@ -438,7 +438,7 @@ defmodule ClaperWeb.EventLive.ManagerSettingsComponent do
             </div>
 
             <div
-              class={"#{if !@state.chat_enabled, do: "opacity-50"} flex space-x-2 items-center mt-3"}
+              class={"#{if !@state.chat_enabled, do: "opacity-50"} flex space-x-2 items-center"}
               title={
                 if !@state.chat_enabled,
                   do: gettext("Enable messages to change this option"),
@@ -496,7 +496,7 @@ defmodule ClaperWeb.EventLive.ManagerSettingsComponent do
               </ClaperWeb.Component.Input.check_button>
             </div>
 
-            <div class="flex space-x-2 items-center mt-3">
+            <div class="flex space-x-2 items-center">
               <ClaperWeb.Component.Input.check_button
                 key={:message_reaction_enabled}
                 checked={@state.message_reaction_enabled}
