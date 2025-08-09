@@ -13,6 +13,7 @@
 - Fix event name validation to be required
 - Docker image is now using Ubuntu instead of Alpine for better dependencies support
 - Fix scrollbar not showing in event manager when no presentation file (#164) (@aryel780)
+- Fix settings scroll for small screen (#168) (@ChayanDass)
 
 ### v.2.3.2
 
