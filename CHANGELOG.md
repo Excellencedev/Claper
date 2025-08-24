@@ -3,6 +3,8 @@
 ### Features
 
 - Add `LANGUAGES` setting to configure available languages in the app
+- Add Latvian language support (@possible-im)
+- Add Hungarian language support (@bpisch)
 
 ### Fixes and improvements
 
