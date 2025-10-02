@@ -1,5 +1,5 @@
 ARG BUILDER_IMAGE="hexpm/elixir:1.18.4-erlang-28.0.1-ubuntu-noble-20250619"
-ARG RUNNER_IMAGE="ubuntu:24.04"
+ARG RUNNER_IMAGE=ubuntu:24.10
 
 FROM ${BUILDER_IMAGE} as builder
 
