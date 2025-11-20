@@ -25,7 +25,9 @@ import QRCodeStyling from "qr-code-styling";
 import { Presenter } from "./presenter";
 import { Manager } from "./manager";
 import Split from "split-grid";
+import CustomHooks from "./hooks";
 import { TourGuideClient } from "@sjmc11/tourguidejs/src/Tour";
+import "./admin-charts.js";
 window.moment = moment;
 
 // Get supported locales from backend configuration or fallback to default list
@@ -302,6 +304,19 @@ Hooks.EmptyNickname = {
   clicked(e) {
     localStorage.removeItem("nickname");
   },
+};
+
+Hooks.SearchableSelect = {
+  mounted() {
+    this.handleEvent("update_hidden_field", (payload) => {
+      if (payload.id === this.el.id) {
+        this.el.value = payload.value;
+        // Trigger a change event to update the form
+        const event = new Event('input', { bubbles: true });
+        this.el.dispatchEvent(event);
+      }
+    });
+  }
 };
 
 Hooks.PostForm = {
@@ -615,6 +630,60 @@ Hooks.Dropdown = {
     });
   },
 };
+
+Hooks.AdminChart = {
+  mounted() {
+    const chartType = this.el.dataset.chartType;
+    const canvasId = this.el.querySelector('canvas').id;
+    const data = JSON.parse(this.el.dataset.chartData);
+    
+    if (chartType === 'users') {
+      window.AdminCharts.createUsersChart(canvasId, data);
+    } else if (chartType === 'events') {
+      window.AdminCharts.createEventsChart(canvasId, data);
+    }
+    
+    this.handleEvent("update_chart", (newData) => {
+      window.AdminCharts.updateChart(canvasId, newData);
+    });
+  },
+  
+  updated() {
+    const chartType = this.el.dataset.chartType;
+    const canvasId = this.el.querySelector('canvas').id;
+    const data = JSON.parse(this.el.dataset.chartData);
+    
+    if (chartType === 'users') {
+      window.AdminCharts.createUsersChart(canvasId, data);
+    } else if (chartType === 'events') {
+      window.AdminCharts.createEventsChart(canvasId, data);
+    }
+  },
+  
+  destroyed() {
+    const canvasId = this.el.querySelector('canvas').id;
+    window.AdminCharts.destroyChart(canvasId);
+  }
+};
+
+Hooks.CSVDownloader = {
+  mounted() {
+    this.handleEvent("download_csv", ({ filename, content }) => {
+      const blob = new Blob([content], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    });
+  }
+};
+
+// Merge our custom hooks with the existing hooks
+Object.assign(Hooks, CustomHooks);
 
 let Uploaders = {};
 
