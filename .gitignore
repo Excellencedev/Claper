@@ -31,7 +31,6 @@ claper-*.tar
 /priv/static/cache_manifest.json
 
 # Env files except sample
-.env*
 !.env.sample
 
 # In case you use Node.js/npm, you want to ignore these.
@@ -48,3 +47,5 @@ priv/static/loaderio-eb3b956a176cdd4f54eb8570ce8bbb06.txt
 .elixir_ls
 
 tailwind.config.js
+config.bat
+node_modules
