@@ -18,18 +18,29 @@ defmodule ClaperWeb.UserOidcAuth do
     |> Base.url_encode64(padding: false)
   end
 
+  # Generate a random state value for CSRF protection
+  defp generate_state do
+    :crypto.strong_rand_bytes(32)
+    |> Base.url_encode64(padding: false)
+  end
+
   @doc false
   def new(conn, _params) do
-    # Generate PKCE verifier and store it in session
+    # Generate PKCE verifier and state, store them in session
     pkce_verifier = generate_pkce_verifier()
-    conn = put_session(conn, :pkce_verifier, pkce_verifier)
+    state = generate_state()
+
+    conn =
+      conn
+      |> put_session(:pkce_verifier, pkce_verifier)
+      |> put_session(:oidc_state, state)
 
     {:ok, redirect_uri} =
       Oidcc.create_redirect_url(
         Claper.OidcProviderConfig,
         client_id(),
         client_secret(),
-        opts(pkce_verifier)
+        opts(pkce_verifier, state)
       )
 
     uri = Enum.join(redirect_uri, "")
@@ -37,43 +48,57 @@ defmodule ClaperWeb.UserOidcAuth do
     redirect(conn, external: uri)
   end
 
-  def callback(conn, %{"code" => code} = _params) do
-    # Get PKCE verifier from session
+  def callback(conn, %{"code" => code, "state" => returned_state} = _params) do
+    # Get PKCE verifier and state from session
     pkce_verifier = get_session(conn, :pkce_verifier)
+    stored_state = get_session(conn, :oidc_state)
 
-    with {:ok,
-          %Oidcc.Token{
-            id: %Oidcc.Token.Id{token: id_token, claims: claims},
-            access: %Oidcc.Token.Access{token: access_token},
-            refresh: refresh_token
-          }} <-
-           Oidcc.retrieve_token(
-             code,
-             Claper.OidcProviderConfig,
-             client_id(),
-             client_secret(),
-             opts(pkce_verifier)
-           ),
-         {:ok, oidc_user} <- validate_user(id_token, access_token, refresh_token, claims) do
+    # Validate state for CSRF protection
+    if returned_state != stored_state do
       conn
-      # Clean up the verifier
       |> delete_session(:pkce_verifier)
-      |> UserAuth.log_in_user(oidc_user.user)
+      |> delete_session(:oidc_state)
+      |> put_status(:unauthorized)
+      |> put_view(ClaperWeb.ErrorView)
+      |> render("csrf_error.html", %{error: "Authentication failed: Invalid state parameter"})
     else
-      {:error, reason} ->
+      with {:ok,
+            %Oidcc.Token{
+              id: %Oidcc.Token.Id{token: id_token, claims: claims},
+              access: %Oidcc.Token.Access{token: access_token},
+              refresh: refresh_token
+            }} <-
+             Oidcc.retrieve_token(
+               code,
+               Claper.OidcProviderConfig,
+               client_id(),
+               client_secret(),
+               opts(pkce_verifier, stored_state)
+             ),
+         {:ok, oidc_user} <- validate_user(id_token, access_token, refresh_token, claims) do
         conn
-        # Clean up the verifier even on error
+        # Clean up the verifier and state
         |> delete_session(:pkce_verifier)
-        |> put_status(:unauthorized)
-        |> put_view(ClaperWeb.ErrorView)
-        |> render("csrf_error.html", %{error: "Authentication failed: #{inspect(reason)}"})
+        |> delete_session(:oidc_state)
+        |> UserAuth.log_in_user(oidc_user.user)
+      else
+        {:error, reason} ->
+          conn
+          # Clean up the verifier and state even on error
+          |> delete_session(:pkce_verifier)
+          |> delete_session(:oidc_state)
+          |> put_status(:unauthorized)
+          |> put_view(ClaperWeb.ErrorView)
+          |> render("csrf_error.html", %{error: "Authentication failed: #{inspect(reason)}"})
+      end
     end
   end
 
   def callback(conn, %{"error" => error} = _params) do
     conn
-    # Clean up the verifier even on error
+    # Clean up the verifier and state even on error
     |> delete_session(:pkce_verifier)
+    |> delete_session(:oidc_state)
     |> put_status(:unauthorized)
     |> put_view(ClaperWeb.ErrorView)
     |> render("csrf_error.html", %{error: "Authentication failed: #{error}"})
@@ -103,14 +128,15 @@ defmodule ClaperWeb.UserOidcAuth do
     Application.get_env(:claper, ClaperWeb.Endpoint)[:base_url]
   end
 
-  defp opts(pkce_verifier) do
+  defp opts(pkce_verifier, state) do
     url = base_url()
 
     base_opts = %{
       redirect_uri: "#{url}/users/oidc/callback",
       scopes: scopes(),
       preferred_auth_methods: [:client_secret_basic, :client_secret_post],
-      require_pkce: true
+      require_pkce: true,
+      state: state
     }
 
     if pkce_verifier do
