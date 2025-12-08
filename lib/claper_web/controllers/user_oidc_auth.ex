@@ -75,7 +75,7 @@ defmodule ClaperWeb.UserOidcAuth do
                client_secret(),
                opts(pkce_verifier, stored_state)
              ),
-         {:ok, oidc_user} <- validate_user(id_token, access_token, refresh_token, claims) do
+           {:ok, oidc_user} <- validate_user(id_token, access_token, refresh_token, claims) do
         conn
         # Clean up the verifier and state
         |> delete_session(:pkce_verifier)
